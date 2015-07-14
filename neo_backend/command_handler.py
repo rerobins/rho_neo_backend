@@ -11,11 +11,16 @@ Store all of the properties on a node in a set, that way can maintain all of the
 
 Payload should be organized as:
 
-<rdf:about uri="node">
-    <rdf:type uri="some type">
-    <rdf:resource type="relationship_type" value="relationship_value">
-    <rdf:property type="property_type">Value</rdf:property>
-</rdf:about>
+No.  Will do it this way:
+
+<x xmlns='jabber:x:data' type='submit'>
+    <field var='rdf:property' type='text-single'>
+        <value>Value</value>
+    </field>
+    <field var='rdf:resource' type='jid-sing'>
+        <value>relationship_value</value>
+    </field>
+</x>
 
 
 """
