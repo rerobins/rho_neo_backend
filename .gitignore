@@ -109,4 +109,4 @@ docs/_build/
 target/
 
 # Rhobot configuration
-/rhobot.conf
+/*.conf
