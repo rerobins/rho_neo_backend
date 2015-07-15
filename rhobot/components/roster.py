@@ -5,22 +5,24 @@ This can be a singleton since we don't plan on joining any other rooms at the mo
 """
 import logging
 from rhobot import configuration
-from rhobot.component import BaseComponent
+from sleekxmpp.plugins.base import base_plugin
 
 
 logger = logging.getLogger(__name__)
 
 
-class _RosterComponent(BaseComponent):
+class RosterComponent(base_plugin):
 
-    def __init__(self):
-        super(_RosterComponent, self).__init__()
+    name = 'rho_bot_roster'
+    dependencies = {'xep_0045', 'rho_bot_configuration'}
+    description = 'Roster Plugin'
 
+    def plugin_init(self):
         self._channel_name = None
         self._nick = None
         self._presence_objects = dict(bot=set(), web=set())
 
-    def _configure(self):
+    def post_init(self):
         """
         Configure this module to start handling the muc issues.
         :param xmpp:
@@ -29,10 +31,13 @@ class _RosterComponent(BaseComponent):
 
         self._channel_name = configuration.get_configuration().get(configuration.MUC_SECTION_NAME,
                                                                    configuration.ROOM_KEY)
-        self._nick = configuration.get_configuration().get(configuration.MUC_SECTION_NAME, configuration.ROOM_NICK_KEY)
+        self._nick = configuration.get_configuration().get(configuration.MUC_SECTION_NAME,
+                                                           configuration.ROOM_NICK_KEY)
 
-        # Make sure that MUC has been loaded.
-        self.xmpp.register_plugin('xep_0045')
+        self.xmpp.add_event_handler(self.xmpp['rho_bot_configuration'].CONFIGURATION_RECEIVED_EVENT, self._join_room)
+
+    def _join_room(self, event):
+        self.xmpp['xep_0045'].joinMUC(self._channel_name, self._nick, wait=True)
 
         self.xmpp.add_event_handler("muc::%s::got_online" % self._channel_name,
                                     self._online_helper)
@@ -86,4 +91,4 @@ class _RosterComponent(BaseComponent):
 
         logger.info('Received: %s' % self._presence_objects)
 
-roster_component = _RosterComponent()
+rho_bot_roster = RosterComponent

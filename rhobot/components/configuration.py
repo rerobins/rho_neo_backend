@@ -2,13 +2,15 @@
 Component that will handle the storing of details in xmpp for configuration.
 """
 import logging
-from rhobot.component import BaseComponent
+from sleekxmpp.plugins.base import base_plugin
 from sleekxmpp.xmlstream import ElementBase, register_stanza_plugin
 
 logger = logging.getLogger(__name__)
 
 
-class _ConfigurationStanza(ElementBase):
+
+
+class ConfigurationStanza(ElementBase):
     """
     Stanza responsible for handling the configuration core.
     <configuration xmlns='rho:configuration'>
@@ -22,8 +24,14 @@ class _ConfigurationStanza(ElementBase):
     namespace = 'rho:configuration'
     plugin_attrib = 'configuration'
 
+    def add_entry(self, key, value):
+        entry_stanza = EntryStanza()
+        entry_stanza['key'] = str(key)
+        entry_stanza['value'] = str(value)
+        self.append(entry_stanza)
 
-class _EntryStanza(ElementBase):
+
+class EntryStanza(ElementBase):
     """
     Entry Stanza.
     """
@@ -35,26 +43,36 @@ class _EntryStanza(ElementBase):
     sub_interfaces = interfaces
 
 
-register_stanza_plugin(_ConfigurationStanza, _EntryStanza, iterable=True)
+register_stanza_plugin(ConfigurationStanza, EntryStanza, iterable=True)
 
 
-class _ConfigurationComponent(BaseComponent):
+class BotConfiguration(base_plugin):
 
+    CONFIGURATION_RECEIVED_EVENT = 'rho::configuration_received'
     _configuration_data_node = 'rho:configuration'
+    name = 'rho_bot_configuration'
+    dependencies = {'xep_0060'}
+    description = 'Configuration Plugin'
 
-    def __init__(self):
-        super(_ConfigurationComponent, self).__init__()
-        self._configuration = dict()
-
-    def _configure(self):
+    def plugin_init(self):
         """
         Configure the plugin to handle the private storage of data.
         :return:
         """
-        self.xmpp.register_plugin('xep_0060')
-        register_stanza_plugin(self.xmpp['xep_0060'].stanza.Item, _ConfigurationStanza)
-
+        self._configuration = dict()
+        register_stanza_plugin(self.xmpp['xep_0060'].stanza.Item, ConfigurationStanza)
         self.xmpp.add_event_handler("session_start", self._start)
+
+    def post_init(self):
+        super(BotConfiguration, self).post_init()
+
+    def plugin_end(self):
+        logger.info('Calling plugin end')
+        self.xmpp.del_event_handler('session_start', self._start)
+
+    def session_bind(self, jid):
+        """Initialize plugin state based on the bound JID."""
+        logger.info('session bind: %s' % jid)
 
     def _start(self, event):
         """
@@ -66,7 +84,7 @@ class _ConfigurationComponent(BaseComponent):
         def get_nodes_callback(stanza):
             self._found_nodes(stanza, callback=self._fetch_configuration)
 
-        self.xmpp['xep_0060'].get_nodes(jid='rerobins@labware', callback=get_nodes_callback)
+        self.xmpp['xep_0060'].get_nodes(jid=self.xmpp.boundjid, callback=get_nodes_callback)
 
     def _found_nodes(self, stanza, callback=None):
         """
@@ -94,7 +112,7 @@ class _ConfigurationComponent(BaseComponent):
         :return:
         """
         logger.info('Fetching Configuration: %s' % self._configuration_data_node)
-        self.xmpp['xep_0060'].get_items(jid='rerobins@labware', node=self._configuration_data_node,
+        self.xmpp['xep_0060'].get_items(jid=self.xmpp.boundjid.bare, node=self._configuration_data_node,
                                         callback=self._configuration_data_retrieved)
 
     def _create_node(self, callback=None):
@@ -109,7 +127,7 @@ class _ConfigurationComponent(BaseComponent):
         configuration_form.add_field(var='pubsub#persist_items', value='1')
         configuration_form.add_field(var='pubsub#max_items', value='1')
 
-        self.xmpp['xep_0060'].create_node(jid='rerobins@labware', node=self._configuration_data_node, callback=callback,
+        self.xmpp['xep_0060'].create_node(jid=self.xmpp.boundjid.bare, node=self._configuration_data_node, callback=callback,
                                           config=configuration_form)
 
     def _configuration_data_retrieved(self, stanza):
@@ -128,22 +146,19 @@ class _ConfigurationComponent(BaseComponent):
             for entry in configuration_node['entries']:
                 self._configuration[entry['key']] = entry['value']
 
-        self.xmpp.event("rho::configuration_received", self)
+        self.xmpp.event(self.CONFIGURATION_RECEIVED_EVENT)
 
     def store_data(self):
         """
         Store data into the pub subscribe values.
         :return:
         """
-        configuration_stanza = _ConfigurationStanza()
+        configuration_stanza = ConfigurationStanza()
 
         for key, value in self._configuration.iteritems():
-            entry_stanza = _EntryStanza()
-            entry_stanza['key'] = str(key)
-            entry_stanza['value'] = str(value)
-            configuration_stanza.append(entry_stanza)
+            configuration_stanza.add_entry(key, value)
 
-        self.xmpp['xep_0060'].publish(jid='rerobins@labware', payload=configuration_stanza,
+        self.xmpp['xep_0060'].publish(jid=self.xmpp.boundjid.bare, payload=configuration_stanza,
                                       node=self._configuration_data_node)
 
     def get_configuration(self):
@@ -182,4 +197,4 @@ class _ConfigurationComponent(BaseComponent):
         if persist:
             self.store_data()
 
-configuration_component = _ConfigurationComponent()
+rho_bot_configuration = BotConfiguration

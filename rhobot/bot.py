@@ -5,8 +5,6 @@ import json
 import sleekxmpp
 import os
 from rhobot import configuration
-from rhobot.components.roster import roster_component
-from rhobot.components.configuration import configuration_component
 
 if os.path.exists('logging.json'):
     with open('logging.json', 'rt') as f:
@@ -17,14 +15,10 @@ else:
 
 logger = logging.getLogger(__name__)
 
-logger.info('Logging Configured')
-
 
 class RhoBot(sleekxmpp.ClientXMPP):
 
-    base_components = [configuration_component]
-
-    def __init__(self, components=None):
+    def __init__(self):
         jid = configuration.get_configuration().get(configuration.CONNECTION_SECTION_NAME,
                                                     configuration.JID_KEY)
         password = configuration.get_configuration().get(configuration.CONNECTION_SECTION_NAME,
@@ -32,7 +26,8 @@ class RhoBot(sleekxmpp.ClientXMPP):
         sleekxmpp.ClientXMPP.__init__(self, jid, password)
 
         self.register_plugin('xep_0199')  # XMPP Ping
-        self.register_plugin('xep_0045')  # MUC
+        self.register_plugin('rho_bot_configuration', module='rhobot.components.configuration')
+        self.register_plugin('rho_bot_roster', module='rhobot.components.roster')
 
         # The session_start event will be triggered when
         # the bot establishes its connection with the server
@@ -40,22 +35,6 @@ class RhoBot(sleekxmpp.ClientXMPP):
         # listen for this event so that we we can initialize
         # our roster.
         self.add_event_handler("session_start", self.start)
-
-        if not components:
-            components = []
-
-        components = components + self.base_components
-
-        for component in components:
-            self.register_component(component)
-
-    def register_component(self, component):
-        """
-        Register the component.
-        :param component:
-        :return:
-        """
-        component.configure(self)
 
     def start(self, event):
         """
@@ -71,22 +50,10 @@ class RhoBot(sleekxmpp.ClientXMPP):
         self.send_presence()
         self.get_roster()
 
-        #self.plugin['xep_0030'].get_info('labware', callback=self._server_features)
-
-        # self.plugin['xep_0045'].joinMUC(configuration.get_configuration().get(configuration.MUC_SECTION_NAME,
-        #                                                                       configuration.ROOM_KEY),
-        #                                 configuration.get_configuration().get(configuration.MUC_SECTION_NAME,
-        #                                                                       configuration.ROOM_NICK_KEY),
-        #                                 wait=True)
-
-    def _server_features(self, iq):
-        logger.info('Server Featutres: %s' % iq)
-
 
 if __name__ == '__main__':
 
     import optparse
-    from rhobot.components.commands import simple_command
 
     parser = optparse.OptionParser()
     parser.add_option('-c', dest="filename", help="Configuration file for the bot", default='rhobot.conf')
@@ -95,7 +62,7 @@ if __name__ == '__main__':
 
     configuration.load_file(options.filename)
 
-    xmpp = RhoBot(components=[])
+    xmpp = RhoBot()
 
     # Connect to the XMPP server and start processing XMPP stanzas.
     if xmpp.connect():
