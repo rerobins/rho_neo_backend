@@ -11,10 +11,10 @@ from rhobot.component import BaseComponent
 logger = logging.getLogger(__name__)
 
 
-class RosterComponent(BaseComponent):
+class _RosterComponent(BaseComponent):
 
     def __init__(self):
-        super(RosterComponent, self).__init__()
+        super(_RosterComponent, self).__init__()
 
         self._channel_name = None
         self._nick = None
@@ -85,3 +85,5 @@ class RosterComponent(BaseComponent):
                     self._presence_objects[key].add(str(info['from']))
 
         logger.info('Received: %s' % self._presence_objects)
+
+roster_component = _RosterComponent()
