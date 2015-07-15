@@ -8,8 +8,6 @@ from sleekxmpp.xmlstream import ElementBase, register_stanza_plugin
 logger = logging.getLogger(__name__)
 
 
-
-
 class ConfigurationStanza(ElementBase):
     """
     Stanza responsible for handling the configuration core.
@@ -62,17 +60,6 @@ class BotConfiguration(base_plugin):
         self._configuration = dict()
         register_stanza_plugin(self.xmpp['xep_0060'].stanza.Item, ConfigurationStanza)
         self.xmpp.add_event_handler("session_start", self._start)
-
-    def post_init(self):
-        super(BotConfiguration, self).post_init()
-
-    def plugin_end(self):
-        logger.info('Calling plugin end')
-        self.xmpp.del_event_handler('session_start', self._start)
-
-    def session_bind(self, jid):
-        """Initialize plugin state based on the bound JID."""
-        logger.info('session bind: %s' % jid)
 
     def _start(self, event):
         """
@@ -127,7 +114,9 @@ class BotConfiguration(base_plugin):
         configuration_form.add_field(var='pubsub#persist_items', value='1')
         configuration_form.add_field(var='pubsub#max_items', value='1')
 
-        self.xmpp['xep_0060'].create_node(jid=self.xmpp.boundjid.bare, node=self._configuration_data_node, callback=callback,
+        self.xmpp['xep_0060'].create_node(jid=self.xmpp.boundjid.bare,
+                                          node=self._configuration_data_node,
+                                          callback=callback,
                                           config=configuration_form)
 
     def _configuration_data_retrieved(self, stanza):

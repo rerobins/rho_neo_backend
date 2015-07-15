@@ -69,4 +69,3 @@ if __name__ == '__main__':
         xmpp.process(block=True)
     else:
         print("Unable to connect.")
-

@@ -25,10 +25,8 @@ class RosterComponent(base_plugin):
     def post_init(self):
         """
         Configure this module to start handling the muc issues.
-        :param xmpp:
         :return:
         """
-
         self._channel_name = configuration.get_configuration().get(configuration.MUC_SECTION_NAME,
                                                                    configuration.ROOM_KEY)
         self._nick = configuration.get_configuration().get(configuration.MUC_SECTION_NAME,

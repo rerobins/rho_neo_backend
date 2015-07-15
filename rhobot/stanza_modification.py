@@ -29,4 +29,3 @@ if __name__ == '__main__':
                    ftype=RDFS.Resource.toPython())
 
     print '%s' % form
-

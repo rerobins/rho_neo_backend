@@ -18,6 +18,7 @@ def get_configuration():
     global _configuration_parser
     return _configuration_parser
 
+
 def load_file(filename):
     """
     Load the filename into the configuration parser.

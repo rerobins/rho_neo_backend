@@ -161,4 +161,3 @@ def find_nodes(labels=None, **kwargs):
                 results.append(node_value)
 
     return results
-
