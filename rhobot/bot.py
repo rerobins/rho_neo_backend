@@ -5,6 +5,8 @@ import json
 import sleekxmpp
 import os
 from rhobot import configuration
+from rhobot.stanza_modification import patch_form_fields
+patch_form_fields()
 
 if os.path.exists('logging.json'):
     with open('logging.json', 'rt') as f:
@@ -57,12 +59,12 @@ if __name__ == '__main__':
 
     parser = optparse.OptionParser()
     parser.add_option('-c', dest="filename", help="Configuration file for the bot", default='rhobot.conf')
-
     (options, args) = parser.parse_args()
 
     configuration.load_file(options.filename)
 
     xmpp = RhoBot()
+    xmpp.register_plugin('rho_bot_storage_client', module='rhobot.components.storage_client')
 
     # Connect to the XMPP server and start processing XMPP stanzas.
     if xmpp.connect():

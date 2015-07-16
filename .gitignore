@@ -110,3 +110,4 @@ target/
 
 # Rhobot configuration
 /*.conf
+/*.rho

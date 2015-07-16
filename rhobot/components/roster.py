@@ -13,6 +13,9 @@ logger = logging.getLogger(__name__)
 
 class RosterComponent(base_plugin):
 
+    PRESENCE_ONLINE = 'online:%s'
+    PRESENCE_OFFLINE = 'offline:%s'
+
     name = 'rho_bot_roster'
     dependencies = {'xep_0045', 'rho_bot_configuration'}
     description = 'Roster Plugin'
@@ -20,7 +23,7 @@ class RosterComponent(base_plugin):
     def plugin_init(self):
         self._channel_name = None
         self._nick = None
-        self._presence_objects = dict(bot=set(), web=set())
+        self._presence_objects = dict(bot=set(), web=set(), store=set())
 
     def post_init(self):
         """
@@ -86,6 +89,7 @@ class RosterComponent(base_plugin):
             for _idents in identities:
                 if key in _idents:
                     self._presence_objects[key].add(str(info['from']))
+                    self.xmpp.event(self.PRESENCE_ONLINE % key, info['from'])
 
         logger.info('Received: %s' % self._presence_objects)
 
