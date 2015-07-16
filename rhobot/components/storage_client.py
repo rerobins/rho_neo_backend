@@ -2,7 +2,7 @@
 Module that will be used to help storage clients connect to a data store.
 """
 import logging
-from rdflib.namespace import FOAF, RDFS
+from rdflib.namespace import FOAF, RDFS, RDF
 from sleekxmpp.plugins.base import base_plugin
 
 
@@ -35,9 +35,12 @@ class StorageClient(base_plugin):
         form = self.xmpp['xep_0004'].make_form()
         form.set_type('result')
 
+        form.add_field(var=RDF.type.toPython(),
+                       value=[FOAF.Person.toPython()],
+                       ftype=RDF.type.toPython())
         form.add_field(var=FOAF.knows.toPython(),
                        value=['http://some_url.com', 'http://someother_vlaue.com'],
-                       ftype=RDFS.Resource.toPython())
+                       ftype=RDFS.Literal.toPython())
         form.add_field(var=FOAF.familyName.toPython(),
                        value='Robinson',
                        ftype=RDFS.Literal.toPython())

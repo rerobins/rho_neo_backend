@@ -51,7 +51,7 @@ def create_node(properties=None, types=None, relationships=None):
     new_node, = _graph.create(node())
 
     if len(types):
-        new_node.add_labels(types)
+        new_node.add_labels(*types)
 
     update_node(new_node, properties=properties, relationships=relationships)
 
