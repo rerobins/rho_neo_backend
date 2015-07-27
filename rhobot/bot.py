@@ -64,7 +64,7 @@ if __name__ == '__main__':
     configuration.load_file(options.filename)
 
     xmpp = RhoBot()
-    xmpp.register_plugin('rho_bot_storage_client', module='rhobot.components.storage_client')
+    # xmpp.register_plugin('rho_bot_storage_client', module='rhobot.components.storage_client')
 
     # Connect to the XMPP server and start processing XMPP stanzas.
     if xmpp.connect():

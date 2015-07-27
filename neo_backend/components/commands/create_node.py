@@ -18,8 +18,7 @@ class CreateNode(base_plugin):
     dependencies = {'xep_0030', 'xep_0050'}
 
     def plugin_init(self):
-        self.xmpp['xep_0050'].add_command(node=CREATE_NODE_COMMAND, name='Create Node',
-                                          handler=self._starting_point)
+        self.xmpp.add_event_handler("session_start", self._start)
 
     def post_init(self):
         """
@@ -27,6 +26,9 @@ class CreateNode(base_plugin):
         :return:
         """
         self.xmpp['xep_0030'].add_identity('store', 'neo4j')
+
+    def _start(self, event):
+        self.xmpp['xep_0050'].add_command(node=CREATE_NODE_COMMAND, name='Create Node', handler=self._starting_point)
 
     def _starting_point(self, iq, initial_session):
         """
