@@ -1,4 +1,7 @@
 """
+Command that will find a specific node based on the details in the payload.
+"""
+"""
 Module that will contain the work flow for parsing the incoming data for creating a node.
 """
 import logging
@@ -10,12 +13,12 @@ from rhobot.components.storage import StoragePayload
 
 logger = logging.getLogger(__name__)
 
-class CreateNode(base_plugin):
+class FindNode(base_plugin):
     """
-    Neo4j Storage plugin for storing data.
+    Neo4j Storage plugin for finding data.
     """
-    name = 'storage_create_node'
-    description = 'Neo4j Create Node'
+    name = 'storage_find_node'
+    description = 'Neo4j Find Node'
     dependencies = {'xep_0030', 'xep_0050'}
 
     def plugin_init(self):
@@ -29,7 +32,7 @@ class CreateNode(base_plugin):
         self.xmpp['xep_0030'].add_identity('store', 'neo4j')
 
     def _start(self, event):
-        self.xmpp['xep_0050'].add_command(node=Commands.CREATE_NODE.value, name='Create Node',
+        self.xmpp['xep_0050'].add_command(node=Commands.FIND_NODE.value, name='Find Node',
                                           handler=self._starting_point)
 
     def _starting_point(self, iq, initial_session):
@@ -39,7 +42,7 @@ class CreateNode(base_plugin):
         :param initial_session:
         :return:
         """
-        logger.info('Create Node iq: %s' % iq)
+        logger.info('Update Node iq: %s' % iq)
         logger.info('Initial_session: %s' % initial_session)
 
         payload = StoragePayload(initial_session['payload'])
@@ -47,17 +50,18 @@ class CreateNode(base_plugin):
         logger.debug('relationships: %s' % payload.references())
         logger.debug('properties: %s' % payload.properties())
         logger.debug('types: %s' % payload.types())
+        logger.debug('about: %s' % payload.about)
 
-        # Create the node
-        uri = command_handler.create_node(properties=payload.properties(), types=payload.types(), relationships=payload.references())
+        nodes = command_handler.find_nodes(payload.types(), **payload.properties())
 
         # Build up the form response containing the newly created uri
         form = self.xmpp['xep_0004'].make_form()
         form.add_reported(var=RDF.about.toPython(), ftype=RDFS.Resource.toPython())
-        form.add_item({RDF.about.toPython(): str(uri)})
+        for node in nodes:
+            form.add_item({RDF.about.toPython(): str(node.uri)})
 
         initial_session['payload'] = form
 
         return initial_session
 
-storage_create_node = CreateNode
+storage_find_node = FindNode

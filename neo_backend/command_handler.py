@@ -24,8 +24,10 @@ No.  Will do it this way:
 
 
 """
-
+import logging
 from py2neo import neo4j, node, rel
+
+logger = logging.getLogger(__name__)
 
 # TODO: Allow for configuration of the database.
 _graph = neo4j.Graph()
@@ -109,6 +111,7 @@ def get_node(uri):
     :param uri: uri of the node in the database.
     :return:
     """
+    logger.info('Looking up node: %s' % uri)
     node_obj = neo4j.Node()
     node_obj.bind(uri)
     node_obj.pull()

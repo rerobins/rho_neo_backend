@@ -10,12 +10,12 @@ from rhobot.components.storage import StoragePayload
 
 logger = logging.getLogger(__name__)
 
-class CreateNode(base_plugin):
+class UpdateNode(base_plugin):
     """
     Neo4j Storage plugin for storing data.
     """
-    name = 'storage_create_node'
-    description = 'Neo4j Create Node'
+    name = 'storage_update_node'
+    description = 'Neo4j Update Node'
     dependencies = {'xep_0030', 'xep_0050'}
 
     def plugin_init(self):
@@ -29,7 +29,7 @@ class CreateNode(base_plugin):
         self.xmpp['xep_0030'].add_identity('store', 'neo4j')
 
     def _start(self, event):
-        self.xmpp['xep_0050'].add_command(node=Commands.CREATE_NODE.value, name='Create Node',
+        self.xmpp['xep_0050'].add_command(node=Commands.UPDATE_NODE.value, name='Update Node',
                                           handler=self._starting_point)
 
     def _starting_point(self, iq, initial_session):
@@ -39,7 +39,7 @@ class CreateNode(base_plugin):
         :param initial_session:
         :return:
         """
-        logger.info('Create Node iq: %s' % iq)
+        logger.info('Update Node iq: %s' % iq)
         logger.info('Initial_session: %s' % initial_session)
 
         payload = StoragePayload(initial_session['payload'])
@@ -47,17 +47,19 @@ class CreateNode(base_plugin):
         logger.debug('relationships: %s' % payload.references())
         logger.debug('properties: %s' % payload.properties())
         logger.debug('types: %s' % payload.types())
+        logger.debug('about: %s' % payload.about)
 
-        # Create the node
-        uri = command_handler.create_node(properties=payload.properties(), types=payload.types(), relationships=payload.references())
+        node = command_handler.get_node(payload.about)
+
+        command_handler.update_node(node, payload.references(), payload.properties())
 
         # Build up the form response containing the newly created uri
         form = self.xmpp['xep_0004'].make_form()
         form.add_reported(var=RDF.about.toPython(), ftype=RDFS.Resource.toPython())
-        form.add_item({RDF.about.toPython(): str(uri)})
+        form.add_item({RDF.about.toPython(): str(node.uri)})
 
         initial_session['payload'] = form
 
         return initial_session
 
-storage_create_node = CreateNode
+storage_update_node = UpdateNode
