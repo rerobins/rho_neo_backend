@@ -24,9 +24,11 @@ No.  Will do it this way:
 
 
 """
-
+import logging
 from py2neo import neo4j, node, rel
 from rdflib.namespace import RDFS, RDF
+
+logger = logging.getLogger(__name__)
 
 # TODO: Allow for configuration of the database.
 _graph = neo4j.Graph()
