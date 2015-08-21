@@ -26,6 +26,7 @@ No.  Will do it this way:
 """
 
 from py2neo import neo4j, node, rel
+from rdflib.namespace import RDFS, RDF
 
 # TODO: Allow for configuration of the database.
 _graph = neo4j.Graph()
@@ -103,15 +104,48 @@ def update_node(node_obj, relationships=None, properties=None):
     return node_obj
 
 
-def get_node(uri):
+def get_node(uri, create=True):
     """
-    Fetches the data of a node from uri provided.
+    Fetches the data of a node from uri provided.  If the node is a remote node, then it will attempt to find a resource
+    node that has the see Also property of the uri.  If that node doesn't exist, it will create it and return it to
+    the calling method.
+
+    The logic for this needs to be the following:
+      * If the end node of the relationship is a part of the graph, go ahead and create the relationship as
+        the logic below implements.
+      * If the end node is not a node in the graph, do a look up for the node based on RDFS:seeAlso property
+        * If that node doesn't exist
+           * create it,
+           * store the relationship
+        * Else:
+           * store the relationship to the node that was found
+
+    When creating the new resource node, the type of the node should be:
+     rdfs:Resource
+    and contain the property:
+     rdfs:seeAlso - the external link that will be pointed to.
+
     :param uri: uri of the node in the database.
+    :param create: should the node be created if it's not found.
     :return:
     """
-    node_obj = neo4j.Node()
-    node_obj.bind(uri)
-    node_obj.pull()
+    if uri.startswith(str(_graph.uri)):
+        node_obj = neo4j.Node()
+        node_obj.bind(uri)
+        node_obj.pull()
+    else:
+        properties = {RDFS.seeAlso.toPython(): uri}
+        # Find a node that is marked as being a resource with the see also property of the uri
+        nodes = find_nodes(labels=[RDFS.Resource.toPython()], **properties)
+        if len(nodes):
+            node_obj = nodes[0]
+        elif create:
+            node_obj = neo4j.Node()
+            node_obj.bind(create_node(properties=properties, types=[RDFS.Resource.toPython()]))
+            node_obj.pull()
+        else:
+            node_obj = None
+
     return node_obj
 
 
