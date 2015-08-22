@@ -9,7 +9,7 @@ from rdflib.namespace import RDFS, RDF
 from neo_backend import command_handler
 from sleekxmpp.plugins.base import base_plugin
 from rhobot.components.storage.enums import Commands
-from rhobot.components.storage import StoragePayload
+from rhobot.components.storage import StoragePayload, ResultCollectionPayload, ResultPayload
 
 logger = logging.getLogger(__name__)
 
@@ -55,12 +55,11 @@ class FindNode(base_plugin):
         nodes = command_handler.find_nodes(payload.types(), **payload.properties())
 
         # Build up the form response containing the newly created uri
-        form = self.xmpp['xep_0004'].make_form()
-        form.add_reported(var=RDF.about.toPython(), ftype=RDFS.Resource.toPython())
+        result_collection_payload = ResultCollectionPayload(self.xmpp['xep_0004'].make_form())
         for node in nodes:
-            form.add_item({RDF.about.toPython(): str(node.uri)})
+            result_collection_payload.append(ResultPayload(about=node.uri, types=node.labels))
 
-        initial_session['payload'] = form
+        initial_session['payload'] = result_collection_payload.populate_payload()
 
         return initial_session
 
