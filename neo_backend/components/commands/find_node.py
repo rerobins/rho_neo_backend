@@ -5,11 +5,12 @@ Command that will find a specific node based on the details in the payload.
 Module that will contain the work flow for parsing the incoming data for creating a node.
 """
 import logging
-from rdflib.namespace import RDFS, RDF
 from neo_backend import command_handler
 from sleekxmpp.plugins.base import base_plugin
 from rhobot.components.storage.enums import Commands
 from rhobot.components.storage import StoragePayload, ResultCollectionPayload, ResultPayload
+from rhobot.components.storage.enums import FindFlags
+
 
 logger = logging.getLogger(__name__)
 
@@ -47,12 +48,17 @@ class FindNode(base_plugin):
 
         payload = StoragePayload(initial_session['payload'])
 
+        logger.debug('about: %s' % payload.about)
         logger.debug('relationships: %s' % payload.references())
         logger.debug('properties: %s' % payload.properties())
         logger.debug('types: %s' % payload.types())
-        logger.debug('about: %s' % payload.about)
 
         nodes = command_handler.find_nodes(payload.types(), **payload.properties())
+
+        if not nodes and payload.flags().get(FindFlags.CREATE_IF_MISSING.value['var'], False):
+            node = command_handler.create_node(types=payload.types(), properties=payload.properties(),
+                                               relationships=payload.references())
+            nodes.append(node)
 
         # Build up the form response containing the newly created uri
         result_collection_payload = ResultCollectionPayload(self.xmpp['xep_0004'].make_form())

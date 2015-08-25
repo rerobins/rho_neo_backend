@@ -49,10 +49,8 @@ class CreateNode(base_plugin):
         logger.debug('types: %s' % payload.types())
 
         # Create the node
-        uri = command_handler.create_node(properties=payload.properties(), types=payload.types(),
-                                          relationships=payload.references())
-
-        node = command_handler.get_node(str(uri))
+        node = command_handler.create_node(properties=payload.properties(), types=payload.types(),
+                                           relationships=payload.references())
 
         # Build up the form response containing the newly created uri
         result = ResultCollectionPayload(self.xmpp['xep_0004'].make_form())

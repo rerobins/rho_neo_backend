@@ -58,7 +58,7 @@ def create_node(properties=None, types=None, relationships=None):
 
     update_node(new_node, properties=properties, relationships=relationships)
 
-    return new_node.uri
+    return new_node
 
 
 def update_node(node_obj, relationships=None, properties=None):
@@ -142,9 +142,7 @@ def get_node(uri, create=True):
         if len(nodes):
             node_obj = nodes[0]
         elif create:
-            node_obj = neo4j.Node()
-            node_obj.bind(create_node(properties=properties, types=[RDFS.Resource.toPython()]))
-            node_obj.pull()
+            node_obj = create_node(properties=properties, types=[RDFS.Resource.toPython()])
         else:
             node_obj = None
 
