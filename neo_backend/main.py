@@ -12,6 +12,7 @@ bot = RhoBot()
 bot.register_plugin('storage_create_node', module='neo_backend.components.commands')
 bot.register_plugin('storage_update_node', module='neo_backend.components.commands')
 bot.register_plugin('storage_find_node', module='neo_backend.components.commands')
+bot.register_plugin('storage_get_node', module='neo_backend.components.commands')
 
 # Connect to the XMPP server and start processing XMPP stanzas.
 if bot.connect():
