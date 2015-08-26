@@ -195,3 +195,19 @@ def find_nodes(labels=None, **kwargs):
                 results.append(node_value)
 
     return results
+
+
+def execute_cypher(query):
+    """
+    Execute the query and return a list of the results that are provided.
+    :param query: query to execute.
+    :return:
+    """
+
+    results = _graph.cypher.execute(statement=query)
+
+    if results.records:
+        return [n.n for n in results.records]
+
+    return []
+
