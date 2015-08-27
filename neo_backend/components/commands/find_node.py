@@ -9,7 +9,7 @@ from neo_backend import command_handler
 from sleekxmpp.plugins.base import base_plugin
 from rhobot.components.storage.enums import Commands
 from rhobot.components.storage import StoragePayload, ResultCollectionPayload, ResultPayload
-from rhobot.components.storage.enums import FindFlags
+from rhobot.components.storage.enums import FindFlags, FindResults
 
 
 logger = logging.getLogger(__name__)
@@ -43,27 +43,33 @@ class FindNode(base_plugin):
         :param initial_session:
         :return:
         """
-        logger.info('Update Node iq: %s' % iq)
-        logger.info('Initial_session: %s' % initial_session)
-
         payload = StoragePayload(initial_session['payload'])
 
-        logger.debug('about: %s' % payload.about)
-        logger.debug('relationships: %s' % payload.references)
-        logger.debug('properties: %s' % payload.properties)
-        logger.debug('types: %s' % payload.types)
+        if logger.isEnabledFor(logging.DEBUG):
+            logger.debug('Find Node iq: %s' % iq)
+            logger.debug('Initial_session: %s' % initial_session)
+            logger.debug('about: %s' % payload.about)
+            logger.debug('relationships: %s' % payload.references)
+            logger.debug('properties: %s' % payload.properties)
+            logger.debug('types: %s' % payload.types)
 
+        created = False
         nodes = command_handler.find_nodes(payload.types, **payload.properties)
 
         if not nodes and payload.flags.get(FindFlags.CREATE_IF_MISSING.value['var'], False):
             node = command_handler.create_node(types=payload.types, properties=payload.properties,
                                                relationships=payload.references)
+            created = True
             nodes.append(node)
 
         # Build up the form response containing the newly created uri
         result_collection_payload = ResultCollectionPayload()
         for node in nodes:
-            result_collection_payload.append(ResultPayload(about=node.uri, types=node.labels))
+            flags = dict()
+            if created:
+                flags[FindResults.CREATED.value] = True
+
+            result_collection_payload.append(ResultPayload(about=node.uri, types=node.labels, flags=flags))
 
         initial_session['payload'] = result_collection_payload.populate_payload()
 
