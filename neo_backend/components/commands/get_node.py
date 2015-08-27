@@ -48,7 +48,7 @@ class GetNode(base_plugin):
 
         node = command_handler.get_node(payload.about, create=False)
 
-        result_payload = StoragePayload(self.xmpp['xep_0004'].make_form())
+        result_payload = StoragePayload()
         result_payload.about = node.uri
 
         # Get the types into place.

@@ -42,7 +42,7 @@ class ExecuteCypher(base_plugin):
         :return:
         """
         payload = StoragePayload(initial_session['payload'])
-        cypher_statement = payload.properties().get(str(NEO4J.cypher), None)
+        cypher_statement = payload.properties.get(str(NEO4J.cypher), None)
 
         if cypher_statement:
             nodes = command_handler.execute_cypher(cypher_statement[0])
@@ -50,7 +50,7 @@ class ExecuteCypher(base_plugin):
             nodes = []
 
         # Build up the form response containing the newly created uri
-        result_collection_payload = ResultCollectionPayload(self.xmpp['xep_0004'].make_form())
+        result_collection_payload = ResultCollectionPayload()
         for node in nodes:
             result_collection_payload.append(ResultPayload(about=node.uri, types=node.labels))
 

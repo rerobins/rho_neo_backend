@@ -44,16 +44,16 @@ class CreateNode(base_plugin):
 
         payload = StoragePayload(initial_session['payload'])
 
-        logger.debug('relationships: %s' % payload.references())
-        logger.debug('properties: %s' % payload.properties())
-        logger.debug('types: %s' % payload.types())
+        logger.debug('relationships: %s' % payload.references)
+        logger.debug('properties: %s' % payload.properties)
+        logger.debug('types: %s' % payload.types)
 
         # Create the node
-        node = command_handler.create_node(properties=payload.properties(), types=payload.types(),
-                                           relationships=payload.references())
+        node = command_handler.create_node(properties=payload.properties, types=payload.types,
+                                           relationships=payload.references)
 
         # Build up the form response containing the newly created uri
-        result = ResultCollectionPayload(self.xmpp['xep_0004'].make_form())
+        result = ResultCollectionPayload()
         result.append(ResultPayload(about=node.uri, types=node.labels))
 
         initial_session['payload'] = result.populate_payload()

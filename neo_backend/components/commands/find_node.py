@@ -49,19 +49,19 @@ class FindNode(base_plugin):
         payload = StoragePayload(initial_session['payload'])
 
         logger.debug('about: %s' % payload.about)
-        logger.debug('relationships: %s' % payload.references())
-        logger.debug('properties: %s' % payload.properties())
-        logger.debug('types: %s' % payload.types())
+        logger.debug('relationships: %s' % payload.references)
+        logger.debug('properties: %s' % payload.properties)
+        logger.debug('types: %s' % payload.types)
 
-        nodes = command_handler.find_nodes(payload.types(), **payload.properties())
+        nodes = command_handler.find_nodes(payload.types, **payload.properties)
 
-        if not nodes and payload.flags().get(FindFlags.CREATE_IF_MISSING.value['var'], False):
-            node = command_handler.create_node(types=payload.types(), properties=payload.properties(),
-                                               relationships=payload.references())
+        if not nodes and payload.flags.get(FindFlags.CREATE_IF_MISSING.value['var'], False):
+            node = command_handler.create_node(types=payload.types, properties=payload.properties,
+                                               relationships=payload.references)
             nodes.append(node)
 
         # Build up the form response containing the newly created uri
-        result_collection_payload = ResultCollectionPayload(self.xmpp['xep_0004'].make_form())
+        result_collection_payload = ResultCollectionPayload()
         for node in nodes:
             result_collection_payload.append(ResultPayload(about=node.uri, types=node.labels))
 

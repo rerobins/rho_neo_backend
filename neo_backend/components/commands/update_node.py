@@ -2,7 +2,6 @@
 Module that will contain the work flow for parsing the incoming data for creating a node.
 """
 import logging
-from rdflib.namespace import RDFS, RDF
 from neo_backend import command_handler
 from sleekxmpp.plugins.base import base_plugin
 from rhobot.components.storage.enums import Commands
@@ -44,17 +43,17 @@ class UpdateNode(base_plugin):
 
         payload = StoragePayload(initial_session['payload'])
 
-        logger.debug('relationships: %s' % payload.references())
-        logger.debug('properties: %s' % payload.properties())
-        logger.debug('types: %s' % payload.types())
+        logger.debug('relationships: %s' % payload.references)
+        logger.debug('properties: %s' % payload.properties)
+        logger.debug('types: %s' % payload.types)
         logger.debug('about: %s' % payload.about)
 
         node = command_handler.get_node(payload.about)
 
-        command_handler.update_node(node, payload.references(), payload.properties())
+        command_handler.update_node(node, payload.references, payload.properties)
 
         # Build up the form response containing the newly created uri
-        result = ResultCollectionPayload(self.xmpp['xep_0004'].make_form())
+        result = ResultCollectionPayload()
         result.append(ResultPayload(about=str(node.uri), types=node.labels))
 
         initial_session['payload'] = result.populate_payload()
