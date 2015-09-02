@@ -207,7 +207,6 @@ def execute_cypher(query):
     results = _graph.cypher.execute(statement=query)
 
     if results.records:
-        return [n.n for n in results.records]
+        return results
 
-    return []
-
+    return None

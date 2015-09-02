@@ -2,11 +2,13 @@
 Command that will execute a provided cypher command.
 """
 import logging
+import json
 from neo_backend import command_handler
 from sleekxmpp.plugins.base import base_plugin
-from rhobot.components.storage.enums import Commands
+from rhobot.components.storage.enums import Commands, CypherFlags
 from rhobot.components.storage import StoragePayload, ResultCollectionPayload, ResultPayload
 from rhobot.components.storage.namespace import NEO4J
+from rdflib.namespace import RDF
 
 
 logger = logging.getLogger(__name__)
@@ -45,14 +47,31 @@ class ExecuteCypher(base_plugin):
         cypher_statement = payload.properties.get(str(NEO4J.cypher), None)
 
         if cypher_statement:
-            nodes = command_handler.execute_cypher(cypher_statement[0])
+            records = command_handler.execute_cypher(cypher_statement[0])
         else:
-            nodes = []
+            records = None
 
         # Build up the form response containing the newly created uri
         result_collection_payload = ResultCollectionPayload()
-        for node in nodes:
-            result_collection_payload.append(ResultPayload(about=node.uri, types=node.labels))
+
+        translation_map = CypherFlags.TRANSLATION_KEY.get_value(payload.flags)
+        translation_map = json.loads(translation_map)
+
+        if records:
+            for record in records.records:
+                about = None
+                labels = None
+                flags = {}
+
+                for key, value in translation_map.iteritems():
+                    if key == str(RDF.about):
+                        node = record[value]
+                        about = node.uri
+                        labels = node.labels
+                    else:
+                        flags[key] = record[value]
+
+                result_collection_payload.append(ResultPayload(about=about, types=labels, flags=flags))
 
         initial_session['payload'] = result_collection_payload.populate_payload()
 
