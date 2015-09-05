@@ -10,6 +10,9 @@ from sleekxmpp.plugins.base import base_plugin
 from rhobot.components.storage.enums import Commands
 from rhobot.components.storage import StoragePayload, ResultCollectionPayload, ResultPayload
 from rhobot.components.storage.enums import FindFlags, FindResults
+from sleekxmpp.plugins.xep_0004 import FormField
+from rhobot.components.stanzas.rdf_stanza import RDFType
+from sleekxmpp.xmlstream import register_stanza_plugin
 
 
 logger = logging.getLogger(__name__)
@@ -24,6 +27,7 @@ class FindNode(base_plugin):
 
     def plugin_init(self):
         self.xmpp.add_event_handler("session_start", self._start)
+        register_stanza_plugin(FormField, RDFType)
 
     def post_init(self):
         """
@@ -56,7 +60,7 @@ class FindNode(base_plugin):
         created = False
         nodes = command_handler.find_nodes(payload.types, **payload.properties)
 
-        if not nodes and payload.flags.get(FindFlags.CREATE_IF_MISSING.value['var'], False):
+        if not nodes and FindFlags.CREATE_IF_MISSING.fetch_from(payload.flags):
             node = command_handler.create_node(types=payload.types, properties=payload.properties,
                                                relationships=payload.references)
             created = True
@@ -65,11 +69,11 @@ class FindNode(base_plugin):
         # Build up the form response containing the newly created uri
         result_collection_payload = ResultCollectionPayload()
         for node in nodes:
-            flags = dict()
+            payload = ResultPayload(about=node.uri, types=node.labels)
             if created:
-                flags[FindResults.CREATED.value] = True
+                payload.add_flag(FindResults.CREATED, True)
 
-            result_collection_payload.append(ResultPayload(about=node.uri, types=node.labels, flags=flags))
+            result_collection_payload.append(payload)
 
         initial_session['payload'] = result_collection_payload.populate_payload()
 

@@ -9,6 +9,9 @@ from rhobot.components.storage.enums import Commands, CypherFlags
 from rhobot.components.storage import StoragePayload, ResultCollectionPayload, ResultPayload
 from rhobot.components.storage.namespace import NEO4J
 from rdflib.namespace import RDF
+from sleekxmpp.plugins.xep_0004 import FormField
+from rhobot.components.stanzas.rdf_stanza import RDFType
+from sleekxmpp.xmlstream import register_stanza_plugin
 
 
 logger = logging.getLogger(__name__)
@@ -24,6 +27,7 @@ class ExecuteCypher(base_plugin):
 
     def plugin_init(self):
         self.xmpp.add_event_handler("session_start", self._start)
+        register_stanza_plugin(FormField, RDFType)
 
     def post_init(self):
         """
@@ -54,14 +58,14 @@ class ExecuteCypher(base_plugin):
         # Build up the form response containing the newly created uri
         result_collection_payload = ResultCollectionPayload()
 
-        translation_map = CypherFlags.TRANSLATION_KEY.get_value(payload.flags)
+        translation_map = CypherFlags.TRANSLATION_KEY.fetch_from(payload.flags)
         translation_map = json.loads(translation_map)
 
         if records:
             for record in records.records:
                 about = None
                 labels = None
-                flags = {}
+                columns = {}
 
                 for key, value in translation_map.iteritems():
                     if key == str(RDF.about):
@@ -69,9 +73,14 @@ class ExecuteCypher(base_plugin):
                         about = node.uri
                         labels = node.labels
                     else:
-                        flags[key] = record[value]
+                        columns[key] = record[value]
 
-                result_collection_payload.append(ResultPayload(about=about, types=labels, flags=flags))
+                result_payload = ResultPayload(about=about, types=labels)
+
+                for key, value in columns.iteritems():
+                    result_payload.add_column(key, value)
+
+                result_collection_payload.append(result_payload)
 
         initial_session['payload'] = result_collection_payload.populate_payload()
 
