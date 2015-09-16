@@ -9,9 +9,6 @@ from rhobot.components.storage.enums import Commands, CypherFlags
 from rhobot.components.storage import StoragePayload, ResultCollectionPayload, ResultPayload
 from rhobot.components.storage.namespace import NEO4J
 from rdflib.namespace import RDF
-from sleekxmpp.plugins.xep_0004 import FormField
-from rhobot.components.stanzas.rdf_stanza import RDFType
-from sleekxmpp.xmlstream import register_stanza_plugin
 
 
 logger = logging.getLogger(__name__)
@@ -27,7 +24,6 @@ class ExecuteCypher(base_plugin):
 
     def plugin_init(self):
         self.xmpp.add_event_handler("session_start", self._start)
-        register_stanza_plugin(FormField, RDFType)
 
     def post_init(self):
         """

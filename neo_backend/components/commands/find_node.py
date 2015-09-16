@@ -10,9 +10,6 @@ from sleekxmpp.plugins.base import base_plugin
 from rhobot.components.storage.enums import Commands
 from rhobot.components.storage import StoragePayload, ResultCollectionPayload, ResultPayload
 from rhobot.components.storage.enums import FindFlags, FindResults
-from sleekxmpp.plugins.xep_0004 import FormField
-from rhobot.components.stanzas.rdf_stanza import RDFType
-from sleekxmpp.xmlstream import register_stanza_plugin
 
 
 logger = logging.getLogger(__name__)
@@ -27,7 +24,6 @@ class FindNode(base_plugin):
 
     def plugin_init(self):
         self.xmpp.add_event_handler("session_start", self._start)
-        register_stanza_plugin(FormField, RDFType)
 
     def post_init(self):
         """
