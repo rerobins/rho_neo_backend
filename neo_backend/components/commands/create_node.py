@@ -3,36 +3,32 @@ Module that will contain the work flow for parsing the incoming data for creatin
 """
 import logging
 from neo_backend import command_handler
-from sleekxmpp.plugins.base import base_plugin
+from rhobot.components.commands.base_command import BaseCommand
 from rhobot.components.storage.enums import Commands
 from rhobot.components.storage import StoragePayload, ResultCollectionPayload, ResultPayload
 
 logger = logging.getLogger(__name__)
 
 
-class CreateNode(base_plugin):
+class CreateNode(BaseCommand):
     """
     Neo4j Storage plugin for storing data.
     """
-    name = 'storage_create_node'
+    name = Commands.CREATE_NODE.value
     description = 'Neo4j Create Node'
-    dependencies = {'xep_0030', 'xep_0050', 'xep_0122'}
-
-    def plugin_init(self):
-        self.xmpp.add_event_handler("session_start", self._start)
+    dependencies = BaseCommand.default_dependencies.union({'xep_0030', 'xep_0122'})
 
     def post_init(self):
         """
         Post initialization, set the identity to be storage.
         :return:
         """
-        self.xmpp['xep_0030'].add_identity('store', 'neo4j')
+        super(CreateNode, self).post_init()
+        self._discovery = self.xmpp['xep_0030']
 
-    def _start(self, event):
-        self.xmpp['xep_0050'].add_command(node=Commands.CREATE_NODE.value, name='Create Node',
-                                          handler=self._starting_point)
+        self._discovery.add_identity('store', 'neo4j')
 
-    def _starting_point(self, iq, initial_session):
+    def command_start(self, iq, initial_session):
         """
         Starting point for creating a new node.
         :param iq:

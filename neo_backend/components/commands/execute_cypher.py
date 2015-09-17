@@ -4,7 +4,7 @@ Command that will execute a provided cypher command.
 import logging
 import json
 from neo_backend import command_handler
-from sleekxmpp.plugins.base import base_plugin
+from rhobot.components.commands.base_command import BaseCommand
 from rhobot.components.storage.enums import Commands, CypherFlags
 from rhobot.components.storage import StoragePayload, ResultCollectionPayload, ResultPayload
 from rhobot.components.storage.namespace import NEO4J
@@ -14,29 +14,25 @@ from rdflib.namespace import RDF
 logger = logging.getLogger(__name__)
 
 
-class ExecuteCypher(base_plugin):
+class ExecuteCypher(BaseCommand):
     """
     Neo4j Storage plugin for finding data.
     """
-    name = 'storage_cypher'
-    description = 'Neo4j Find Node'
-    dependencies = {'xep_0030', 'xep_0050', 'xep_0122'}
-
-    def plugin_init(self):
-        self.xmpp.add_event_handler("session_start", self._start)
+    name = Commands.CYPHER.value
+    description = 'Neo4j Execute Cypher'
+    dependencies = BaseCommand.default_dependencies.union({'xep_0030', 'xep_0122'})
 
     def post_init(self):
         """
         Post initialization, set the identity to be storage.
         :return:
         """
-        self.xmpp['xep_0030'].add_identity('store', 'neo4j')
+        super(ExecuteCypher, self).post_init()
+        self._discovery = self.xmpp['xep_0030']
 
-    def _start(self, event):
-        self.xmpp['xep_0050'].add_command(node=Commands.CYPHER.value, name='Cypher Query',
-                                          handler=self._starting_point)
+        self._discovery.add_identity('store', 'neo4j')
 
-    def _starting_point(self, iq, initial_session):
+    def command_start(self, request, initial_session):
         """
         Starting point for creating a new node.
         :param iq:

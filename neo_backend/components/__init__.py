@@ -1,1 +1,3 @@
-__author__ = 'rerobins'
+"""
+Additional components for the neo4j backend.
+"""
