@@ -20,7 +20,7 @@ class FindNode(base_plugin):
     """
     name = 'storage_find_node'
     description = 'Neo4j Find Node'
-    dependencies = {'xep_0030', 'xep_0050'}
+    dependencies = {'xep_0030', 'xep_0050', 'xep_0122'}
 
     def plugin_init(self):
         self.xmpp.add_event_handler("session_start", self._start)

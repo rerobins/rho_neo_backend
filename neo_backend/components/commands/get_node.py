@@ -16,7 +16,7 @@ class GetNode(base_plugin):
     """
     name = 'storage_get_node'
     description = 'Neo4j Get Node'
-    dependencies = {'xep_0030', 'xep_0050'}
+    dependencies = {'xep_0030', 'xep_0050', 'xep_0122'}
 
     def plugin_init(self):
         self.xmpp.add_event_handler("session_start", self._start)
@@ -48,26 +48,27 @@ class GetNode(base_plugin):
 
         node = command_handler.get_node(payload.about, create=False)
 
-        result_payload = StoragePayload()
-        result_payload.about = node.uri
+        if node:
+            result_payload = StoragePayload()
+            result_payload.about = node.uri
 
-        # Get the types into place.
-        for label in node.labels:
-            result_payload.add_type(label)
+            # Get the types into place.
+            for label in node.labels:
+                result_payload.add_type(label)
 
-        # Gather up all of the references
-        for relationship in node.match_outgoing():
-            result_payload.add_reference(relationship.type, relationship.end_node.uri)
+            # Gather up all of the references
+            for relationship in node.match_outgoing():
+                result_payload.add_reference(relationship.type, relationship.end_node.uri)
 
-        # Gather up all of the properties
-        for key, value in node.properties.iteritems():
-            if isinstance(value, list):
-                for val in value:
-                    result_payload.add_property(key, val)
-            else:
-                result_payload.add_property(key, value)
+            # Gather up all of the properties
+            for key, value in node.properties.iteritems():
+                if isinstance(value, list):
+                    for val in value:
+                        result_payload.add_property(key, val)
+                else:
+                    result_payload.add_property(key, value)
 
-        initial_session['payload'] = result_payload.populate_payload()
+            initial_session['payload'] = result_payload.populate_payload()
 
         return initial_session
 
