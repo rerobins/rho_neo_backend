@@ -13,6 +13,7 @@ from rhobot.components.storage.enums import FindFlags, FindResults
 
 logger = logging.getLogger(__name__)
 
+
 class FindNode(BaseCommand):
     """
     Neo4j Storage plugin for finding data.

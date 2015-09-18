@@ -9,6 +9,7 @@ from rhobot.components.storage import StoragePayload
 
 logger = logging.getLogger(__name__)
 
+
 class GetNode(BaseCommand):
     """
     Neo4j Storage plugin for finding data.

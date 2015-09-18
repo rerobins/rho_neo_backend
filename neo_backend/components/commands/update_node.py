@@ -9,6 +9,7 @@ from rhobot.components.storage import StoragePayload, ResultCollectionPayload, R
 
 logger = logging.getLogger(__name__)
 
+
 class UpdateNode(BaseCommand):
     """
     Neo4j Storage plugin for storing data.
