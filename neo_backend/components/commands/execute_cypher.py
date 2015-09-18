@@ -3,13 +3,12 @@ Command that will execute a provided cypher command.
 """
 import logging
 import json
-from neo_backend import command_handler
+
 from rhobot.components.commands.base_command import BaseCommand
 from rhobot.components.storage.enums import Commands, CypherFlags
 from rhobot.components.storage import StoragePayload, ResultCollectionPayload, ResultPayload
 from rhobot.components.storage.namespace import NEO4J
 from rdflib.namespace import RDF
-
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +19,7 @@ class ExecuteCypher(BaseCommand):
     """
     name = Commands.CYPHER.value
     description = 'Neo4j Execute Cypher'
-    dependencies = BaseCommand.default_dependencies.union({'xep_0030', 'xep_0122'})
+    dependencies = BaseCommand.default_dependencies.union({'xep_0122', 'neo4j_wrapper'})
 
     def post_init(self):
         """
@@ -28,53 +27,54 @@ class ExecuteCypher(BaseCommand):
         :return:
         """
         super(ExecuteCypher, self).post_init()
-        self._discovery = self.xmpp['xep_0030']
-
-        self._discovery.add_identity('store', 'neo4j')
+        self._command_handler = self.xmpp['neo4j_wrapper']
 
     def command_start(self, request, initial_session):
         """
         Starting point for creating a new node.
-        :param iq:
+        :param request:
         :param initial_session:
         :return:
         """
-        payload = StoragePayload(initial_session['payload'])
-        cypher_statement = payload.properties.get(str(NEO4J.cypher), None)
-
-        if cypher_statement:
-            records = command_handler.execute_cypher(cypher_statement[0])
+        if not initial_session['payload']:
+            initial_session['notes'] = [('error', 'Cannot execute without a payload')]
         else:
-            records = None
+            payload = StoragePayload(initial_session['payload'])
+            cypher_statement = payload.properties.get(str(NEO4J.cypher), None)
 
-        # Build up the form response containing the newly created uri
-        result_collection_payload = ResultCollectionPayload()
+            if cypher_statement:
+                records = self._command_handler.execute_cypher(cypher_statement[0])
+            else:
+                records = None
 
-        translation_map = CypherFlags.TRANSLATION_KEY.fetch_from(payload.flags)
-        translation_map = json.loads(translation_map)
+            # Build up the form response containing the newly created uri
+            result_collection_payload = ResultCollectionPayload()
 
-        if records:
-            for record in records.records:
-                about = None
-                labels = None
-                columns = {}
+            translation_map = CypherFlags.TRANSLATION_KEY.fetch_from(payload.flags)
+            translation_map = json.loads(translation_map)
 
-                for key, value in translation_map.iteritems():
-                    if key == str(RDF.about):
-                        node = record[value]
-                        about = node.uri
-                        labels = node.labels
-                    else:
-                        columns[key] = record[value]
+            if records:
+                for record in records.records:
+                    about = None
+                    labels = None
+                    columns = {}
 
-                result_payload = ResultPayload(about=about, types=labels)
+                    for key, value in translation_map.iteritems():
+                        if key == str(RDF.about):
+                            node = record[value]
+                            about = node.uri
+                            labels = node.labels
+                        else:
+                            columns[key] = record[value]
 
-                for key, value in columns.iteritems():
-                    result_payload.add_column(key, value)
+                    result_payload = ResultPayload(about=about, types=labels)
 
-                result_collection_payload.append(result_payload)
+                    for key, value in columns.iteritems():
+                        result_payload.add_column(key, value)
 
-        initial_session['payload'] = result_collection_payload.populate_payload()
+                    result_collection_payload.append(result_payload)
+
+            initial_session['payload'] = result_collection_payload.populate_payload()
 
         return initial_session
 
